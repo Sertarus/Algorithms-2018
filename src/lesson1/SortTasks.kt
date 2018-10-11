@@ -2,6 +2,9 @@
 
 package lesson1
 
+import java.io.File
+import java.lang.IllegalArgumentException
+
 /**
  * Сортировка времён
  *
@@ -60,8 +63,32 @@ fun sortTimes(inputName: String, outputName: String) {
  *
  * В случае обнаружения неверного формата файла бросить любое исключение.
  */
+// T = O(N²+N) R = O(N²)
 fun sortAddresses(inputName: String, outputName: String) {
-    TODO()
+    val outputStream = File(outputName).bufferedWriter()
+    val data = mutableMapOf<String, MutableList<String>>()
+    for (line in File(inputName).readLines()) { //N
+        if (!line.matches(Regex("""[А-Я][а-я]+ [А-Я][а-я]+ - [А-Я][а-я]+ \d+"""))) throw IllegalArgumentException()
+        val nameAndStreetList = line.split(" - ")
+        if (nameAndStreetList[1] !in data.keys) data[nameAndStreetList[1]] = mutableListOf(nameAndStreetList[0])
+        else data[nameAndStreetList[1]]!!.add(nameAndStreetList[0])
+    }
+    val streets = data.keys.toTypedArray()
+    quickSort(streets) //O(N²)
+    streets.forEach {
+        val nameList = data[it]!!.toTypedArray()
+        quickSort(nameList) //O(N²)
+        outputStream.write("$it - ")
+        for (i in 0 until nameList.size - 1) {
+            val currentElement = nameList[i]
+            outputStream.write("$currentElement, ")
+        }
+        outputStream.write(nameList[nameList.lastIndex])
+        if (streets.indexOf(it) != streets.size - 1) {
+            outputStream.newLine()
+        }
+    }
+    outputStream.close()
 }
 
 /**
@@ -94,8 +121,21 @@ fun sortAddresses(inputName: String, outputName: String) {
  * 99.5
  * 121.3
  */
+//T = O(N²+N) R = O(N)
 fun sortTemperatures(inputName: String, outputName: String) {
-    TODO()
+    val outputStream = File(outputName).bufferedWriter()
+    val data = mutableListOf<Double>()
+    for (line in File(inputName).readLines()) { //N
+        if (!line.matches(Regex("""-?\d+\.\d+"""))) throw IllegalArgumentException()
+        data.add(line.toDouble())
+    }
+    val result = data.toTypedArray()
+    quickSort(result) //N²
+    result.forEach {
+        outputStream.write("$it")
+        outputStream.newLine()
+    }
+    outputStream.close()
 }
 
 /**
@@ -148,4 +188,3 @@ fun sortSequence(inputName: String, outputName: String) {
 fun <T : Comparable<T>> mergeArrays(first: Array<T>, second: Array<T?>) {
     TODO()
 }
-

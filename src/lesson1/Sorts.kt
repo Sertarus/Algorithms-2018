@@ -94,6 +94,28 @@ fun heapSort(elements: IntArray) {
     }
 }
 
+private fun<T : Comparable<T>> partition(elements: Array<T>, min: Int, max: Int): Int {
+    val x = elements[min + random.nextInt(max - min + 1)]
+    var left = min
+    var right = max
+    while (left <= right) {
+        while (elements[left] < x) {
+            left++
+        }
+        while (elements[right] > x) {
+            right--
+        }
+        if (left <= right) {
+            val temp = elements[left]
+            elements[left] = elements[right]
+            elements[right] = temp
+            left++
+            right--
+        }
+    }
+    return right
+}
+
 private fun partition(elements: IntArray, min: Int, max: Int): Int {
     val x = elements[min + random.nextInt(max - min + 1)]
     var left = min
@@ -116,12 +138,24 @@ private fun partition(elements: IntArray, min: Int, max: Int): Int {
     return right
 }
 
+private fun<T : Comparable<T>> quickSort(elements: Array<T>, min: Int, max: Int) {
+    if (min < max) {
+        val border = partition(elements, min, max)
+        quickSort(elements, min, border)
+        quickSort(elements, border + 1, max)
+    }
+}
+
 private fun quickSort(elements: IntArray, min: Int, max: Int) {
     if (min < max) {
         val border = partition(elements, min, max)
         quickSort(elements, min, border)
         quickSort(elements, border + 1, max)
     }
+}
+
+fun<T : Comparable<T>> quickSort(elements: Array<T>) {
+    quickSort(elements, 0, elements.size - 1)
 }
 
 fun quickSort(elements: IntArray) {

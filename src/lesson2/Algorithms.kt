@@ -2,6 +2,9 @@
 
 package lesson2
 
+import java.io.File
+import java.lang.StringBuilder
+
 /**
  * Получение наибольшей прибыли (она же -- поиск максимального подмассива)
  * Простая
@@ -91,8 +94,55 @@ fun josephTask(menNumber: Int, choiceInterval: Int): Int {
  * Если имеется несколько самых длинных общих подстрок одной длины,
  * вернуть ту из них, которая встречается раньше в строке first.
  */
+//T = O(firstLength*secondLength) R=O(1)
 fun longestCommonSubstring(first: String, second: String): String {
-    TODO()
+    var longestSubstringLength = 0
+    var longestSubstringEnd = -1
+    var firstCurrentIndex = 0
+    var secondCurrentIndex = 0
+    var currentSubstringLength = 0
+    var nextCellAfterWordSearching = Pair(-1, -1)
+
+    while (firstCurrentIndex != first.length) {
+        while (secondCurrentIndex != second.length) {
+            if (longestSubstringLength >= second.length - secondCurrentIndex && currentSubstringLength == 0) break
+            if (first[firstCurrentIndex] == second[secondCurrentIndex]) {
+                if (nextCellAfterWordSearching.first == -1) {
+                    nextCellAfterWordSearching = Pair(firstCurrentIndex, secondCurrentIndex + 1)
+                }
+                if (firstCurrentIndex < first.length - 1 && secondCurrentIndex < second.length - 1) {
+                    firstCurrentIndex++
+                    secondCurrentIndex++
+                    currentSubstringLength++
+                } else {
+                    if (currentSubstringLength > longestSubstringLength) {
+                        longestSubstringEnd = firstCurrentIndex
+                        longestSubstringLength = currentSubstringLength + 1
+                    }
+                    firstCurrentIndex = nextCellAfterWordSearching.first
+                    secondCurrentIndex = nextCellAfterWordSearching.second
+                    nextCellAfterWordSearching = Pair(-1, -1)
+                    currentSubstringLength = 0
+                }
+            } else {
+                if (currentSubstringLength > longestSubstringLength) {
+                    longestSubstringEnd = firstCurrentIndex - 1
+                    longestSubstringLength = currentSubstringLength
+                }
+                if (currentSubstringLength > 0) {
+                    firstCurrentIndex = nextCellAfterWordSearching.first
+                    secondCurrentIndex = nextCellAfterWordSearching.second
+                    nextCellAfterWordSearching = Pair(-1, -1)
+                    currentSubstringLength = 0
+                } else {
+                    secondCurrentIndex++
+                }
+            }
+        }
+        firstCurrentIndex++
+        secondCurrentIndex = 0
+    }
+    return first.substring(longestSubstringEnd - longestSubstringLength + 1..longestSubstringEnd)
 }
 
 /**
@@ -135,6 +185,76 @@ fun calcPrimesNumber(limit: Int): Int {
  * В файле буквы разделены пробелами, строки -- переносами строк.
  * Остальные символы ни в файле, ни в словах не допускаются.
  */
+fun findLetter(row: Int, column: Int, matrix: List<MutableList<Char>>, usedCells: MutableSet<Pair<Int, Int>>,
+               word: String, currentLetter: Int): MutableList<Pair<Int, Int>> {
+    val resultDirectionList = mutableListOf<Pair<Int, Int>>()
+    val directions = arrayOf(Pair(1, 0), Pair(0, 1), Pair(-1, 0), Pair(0, -1))
+    directions.forEach { direction ->
+        var currentRow = row
+        var currentColumn = column
+        currentRow += direction.first
+        currentColumn += direction.second
+        if (Pair(currentRow, currentColumn) !in usedCells) {
+            if (currentRow >= 0 && currentColumn >= 0 && currentRow < matrix.size && currentColumn < matrix[0].size) {
+                if (matrix[currentRow][currentColumn] == word[currentLetter]) {
+                    resultDirectionList.add(direction)
+                }
+            }
+        }
+    }
+    return resultDirectionList
+}
+
+// T = O(m*n*words.size) m - количество столбцов матрицы n - количестов строк R = O(N)
 fun baldaSearcher(inputName: String, words: Set<String>): Set<String> {
-    TODO()
+    val matrix = mutableListOf<MutableList<Char>>()
+    val foundWords = mutableSetOf<String>()
+    for ((rowCounter, line) in File(inputName).readLines().withIndex()) {
+        matrix.add(mutableListOf())
+        for (i in 0..line.length step 2) {
+            matrix[rowCounter].add(line[i])
+        }
+    }
+    for (row in 0 until matrix.size) {
+        for (column in 0 until matrix[0].size) {
+            words.forEach { word ->
+                if (word[0] == matrix[row][column] && !foundWords.contains(word)) {
+                    var currentRow = row
+                    var currentColumn = column
+                    val potentialWord = StringBuilder().append(word[0])
+                    var currentLetter = 1
+                    val wayList = mutableListOf<Pair<Int, Int>>()
+                    val checkedCells = mutableSetOf<Pair<Int, Int>>()
+                    val usedCells = mutableSetOf(Pair(row, column))
+                    do {
+                        if (Pair(currentRow, currentColumn) !in checkedCells) {
+                            wayList.addAll(findLetter(currentRow, currentColumn, matrix,
+                                    usedCells, word, currentLetter))
+                            checkedCells.add(Pair(currentRow, currentColumn))
+                        }
+                        if (wayList.isNotEmpty()) {
+                            currentRow += wayList.last().first
+                            currentColumn += wayList.last().second
+                            potentialWord.append(word[currentLetter])
+                            currentLetter++
+                            usedCells.add(Pair(currentRow, currentColumn))
+                            if (currentLetter < word.length && findLetter(currentRow, currentColumn, matrix,
+                                            usedCells, word, currentLetter).isEmpty()) {
+                                usedCells.remove(Pair(currentRow, currentColumn))
+                                currentRow -= wayList.last().first
+                                currentColumn -= wayList.last().second
+                                currentLetter--
+                                potentialWord.deleteCharAt(potentialWord.length - 1)
+                                wayList.removeAt(wayList.size - 1)
+                            }
+                            if (potentialWord.toString() == word) {
+                                foundWords.add(word)
+                            }
+                        }
+                    } while (word !in foundWords && wayList.isNotEmpty())
+                }
+            }
+        }
+    }
+    return foundWords
 }
