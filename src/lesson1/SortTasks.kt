@@ -118,7 +118,7 @@ fun sortAddresses(inputName: String, outputName: String) {
  * 99.5
  * 121.3
  */
-//T = O(N²+N) R = O(N)
+//T = O(N*logN) R = O(N)
 fun sortTemperatures(inputName: String, outputName: String) {
     val outputStream = File(outputName).bufferedWriter()
     val data = mutableListOf<Double>()
