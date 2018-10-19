@@ -63,28 +63,25 @@ fun sortTimes(inputName: String, outputName: String) {
  *
  * В случае обнаружения неверного формата файла бросить любое исключение.
  */
-// T = O(N²+N) R = O(N²)
+// T = O(N*logN) R = O(N²)
 fun sortAddresses(inputName: String, outputName: String) {
     val outputStream = File(outputName).bufferedWriter()
-    val data = mutableMapOf<String, MutableList<String>>()
+    val data = sortedMapOf<String, MutableList<String>>()
     for (line in File(inputName).readLines()) { //N
         if (!line.matches(Regex("""[А-Я][а-я]+ [А-Я][а-я]+ - [А-Я][а-я]+ \d+"""))) throw IllegalArgumentException()
         val nameAndStreetList = line.split(" - ")
-        if (nameAndStreetList[1] !in data.keys) data[nameAndStreetList[1]] = mutableListOf(nameAndStreetList[0])
-        else data[nameAndStreetList[1]]!!.add(nameAndStreetList[0])
+        data.getOrPut(nameAndStreetList[1]) { mutableListOf() }.add(nameAndStreetList[0])
     }
-    val streets = data.keys.toTypedArray()
-    quickSort(streets) //O(N²)
-    streets.forEach {
+    data.keys.forEach {
         val nameList = data[it]!!.toTypedArray()
-        quickSort(nameList) //O(N²)
+        quickSort(nameList) //O(N*logN)
         outputStream.write("$it - ")
         for (i in 0 until nameList.size - 1) {
             val currentElement = nameList[i]
             outputStream.write("$currentElement, ")
         }
         outputStream.write(nameList[nameList.lastIndex])
-        if (streets.indexOf(it) != streets.size - 1) {
+        if (data.keys.indexOf(it) != data.keys.size - 1) {
             outputStream.newLine()
         }
     }
@@ -129,9 +126,7 @@ fun sortTemperatures(inputName: String, outputName: String) {
         if (!line.matches(Regex("""-?\d+\.\d+"""))) throw IllegalArgumentException()
         data.add(line.toDouble())
     }
-    val result = data.toTypedArray()
-    quickSort(result) //N²
-    result.forEach {
+    data.sorted().forEach {
         outputStream.write("$it")
         outputStream.newLine()
     }

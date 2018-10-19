@@ -111,7 +111,7 @@ abstract class AbstractTaskTests : AbstractFileTests() {
                 File("temp_sorted_expected.txt").delete()
                 File("temp_sorted_actual.txt").delete()
             }
-        }
+    }
         testGeneratedTemperatures(10)
         testGeneratedTemperatures(5000)
     }
