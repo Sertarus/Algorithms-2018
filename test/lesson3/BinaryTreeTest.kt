@@ -1,11 +1,8 @@
 package lesson3
 
 import org.junit.jupiter.api.Tag
-import kotlin.test.Test
 import java.util.*
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class BinaryTreeTest {
     private fun testAdd(create: () -> CheckableSortedSet<Int>) {
@@ -115,6 +112,36 @@ class BinaryTreeTest {
     @Tag("Normal")
     fun testIteratorKotlin() {
         testIterator { createKotlinTree() }
+        val test = KtBinaryTree<Int>()
+        val ktIterator = test.BinaryTreeIterator()
+        assertFails {
+            ktIterator.next()
+        }
+        val testList = mutableListOf<Int>()
+        testList.add(25)
+        testList.add(81)
+        testList.add(38)
+        testList.add(71)
+        testList.add(37)
+        testList.add(21)
+        testList.add(92)
+        testList.add(74)
+        testList.add(27)
+        testList.add(67)
+        testList.add(29)
+        testList.add(55)
+        testList.add(76)
+        testList.add(57)
+        testList.add(98)
+        testList.add(15)
+        testList.add(9)
+        testList.add(48)
+        for (element in testList) {
+            test.add(element)
+        }
+        val resultList = mutableListOf<Int>()
+        while (ktIterator.hasNext()) resultList.add(ktIterator.next())
+        assertEquals(testList.sorted(), resultList)
     }
 
     @Test
@@ -157,6 +184,23 @@ class BinaryTreeTest {
             }
             assertTrue(binarySet.checkInvariant())
         }
+        val test = KtBinaryTree<Int>()
+        val ktIterator = test.iterator()
+        assertFails {
+            ktIterator.remove()
+        }
+        val testTree = TreeSet<Int>()
+        for (i in 1000 downTo 0) testTree.add(i)
+        for (element in testTree) {
+            test.add(element)
+        }
+        testTree.remove(445)
+        while (ktIterator.hasNext()) {
+            val element = ktIterator.next()
+            if (element == 445)
+                ktIterator.remove()
+        }
+        assertEquals<SortedSet<*>>(testTree, test)
     }
 
     @Test

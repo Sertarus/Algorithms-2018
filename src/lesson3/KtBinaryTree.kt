@@ -1,6 +1,6 @@
 package lesson3
 
-import java.util.SortedSet
+import java.util.*
 import kotlin.NoSuchElementException
 
 // Attention: comparable supported but comparator is not
@@ -83,8 +83,35 @@ class KtBinaryTree<T : Comparable<T>> : AbstractMutableSet<T>(), CheckableSorted
          * Поиск следующего элемента
          * Средняя
          */
+        // T = O(h), R = O(h), где h - высота дерева
         private fun findNext(): Node<T>? {
-            TODO()
+            val oldValue = current?.value ?: return find(first())
+            if (oldValue == last()) return null
+            var tempCurrent = root
+            val wayList = mutableListOf<Node<T>?>()
+            val checkedNodes = mutableSetOf<Node<T>?>()
+            while (true) {
+                val leftNodeFits = tempCurrent?.left != null && tempCurrent.value > oldValue
+                val rightNodeFits = tempCurrent?.right != null && tempCurrent.value <= oldValue
+                when {
+                    (leftNodeFits && !checkedNodes.contains(tempCurrent?.left)) -> {
+                        wayList.add(tempCurrent)
+                        tempCurrent = tempCurrent?.left
+                    }
+                    (rightNodeFits && !checkedNodes.contains(tempCurrent?.right)) -> {
+                        wayList.add(tempCurrent)
+                        tempCurrent = tempCurrent?.right
+                    }
+                    (tempCurrent!!.value > oldValue) -> return tempCurrent
+                    else -> {
+                        if (wayList.size > 0) {
+                            checkedNodes.add(tempCurrent)
+                            tempCurrent = wayList.last()
+                            wayList.remove(wayList.last())
+                        } else return null
+                    }
+                }
+            }
         }
 
         override fun hasNext(): Boolean = findNext() != null
@@ -98,8 +125,72 @@ class KtBinaryTree<T : Comparable<T>> : AbstractMutableSet<T>(), CheckableSorted
          * Удаление следующего элемента
          * Сложная
          */
+        // T = O(h) R = O(1), где h - высота дерева
         override fun remove() {
-            TODO()
+            val iterator = this@KtBinaryTree.BinaryTreeIterator()
+            var parentNode: Node<T>? = null
+            var parentIsLess = false
+            while (iterator.hasNext()) {
+                iterator.next()
+                if (iterator.current?.right != null && iterator.current?.right!! == current) {
+                    parentNode = iterator.current
+                    parentIsLess = true
+                } else if (iterator.current?.left != null && iterator.current?.left!! == current) {
+                    parentNode = iterator.current
+                }
+            }
+            when {
+                (current?.left == null && current?.right == null) -> {
+                    if (current == root) root = null
+                    else {
+                        if (parentIsLess) parentNode?.right = null
+                        else parentNode?.left = null
+                    }
+                }
+                (current?.left == null && current?.right != null) -> {
+                    if (current == root) root = current?.right
+                    else {
+                        if (parentIsLess) parentNode?.right = current?.right
+                        else parentNode?.left = current?.right
+                    }
+                }
+                (current?.left != null && current?.right == null) -> {
+                    if (current == root) root = current?.left
+                    else {
+                        if (parentIsLess) parentNode?.right = current?.left
+                        else parentNode?.left = current?.left
+                    }
+                }
+                (current?.left != null && current?.right != null) -> {
+                    var substituteParent = current
+                    var substituteChild: Node<T>? = null
+                    if (substituteParent?.right?.left != null) {
+                        substituteParent = substituteParent.right
+                        while (substituteParent?.left?.left != null) {
+                            substituteParent = substituteParent.left
+                        }
+                        if (substituteParent?.left?.right != null) {
+                            substituteChild = substituteParent.left?.right
+                        }
+                        substituteParent?.left?.left = current?.left
+                        substituteParent?.left?.right = current?.right
+                        if (current == root) root = substituteParent?.left
+                        else {
+                            if (parentIsLess) parentNode?.right = substituteParent?.left
+                            else parentNode?.left = substituteParent?.left
+                        }
+                        substituteParent?.left = substituteChild
+                    } else {
+                        substituteParent?.right?.left = current?.left
+                        if (current == root) root = substituteParent?.right
+                        else {
+                            if (parentIsLess) parentNode?.right = substituteParent?.right
+                            else parentNode?.left = substituteParent?.right
+                        }
+                    }
+                }
+            }
+            size--
         }
     }
 
