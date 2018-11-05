@@ -3,6 +3,8 @@ package lesson3
 import org.junit.jupiter.api.Tag
 import java.util.*
 import kotlin.test.*
+import java.lang.IllegalStateException
+
 
 class BinaryTreeTest {
     private fun testAdd(create: () -> CheckableSortedSet<Int>) {
@@ -184,10 +186,17 @@ class BinaryTreeTest {
             }
             assertTrue(binarySet.checkInvariant())
         }
+    }
+
+    @Test
+    @Tag("Hard")
+    fun testIteratorRemoveKotlin() {
+        testIteratorRemove { createKotlinTree() }
         val test = KtBinaryTree<Int>()
         val ktIterator = test.iterator()
-        assertFails {
+        try {
             ktIterator.remove()
+        } catch (e: IllegalStateException) {
         }
         val testTree = TreeSet<Int>()
         for (i in 1000 downTo 0) testTree.add(i)
@@ -197,16 +206,15 @@ class BinaryTreeTest {
         testTree.remove(445)
         while (ktIterator.hasNext()) {
             val element = ktIterator.next()
-            if (element == 445)
-                ktIterator.remove()
+            if (element == 445) {
+                try {
+                    ktIterator.remove()
+                    ktIterator.remove()
+                } catch (e: IllegalStateException) {
+                }
+            }
         }
         assertEquals<SortedSet<*>>(testTree, test)
-    }
-
-    @Test
-    @Tag("Hard")
-    fun testIteratorRemoveKotlin() {
-        testIteratorRemove { createKotlinTree() }
     }
 
     @Test

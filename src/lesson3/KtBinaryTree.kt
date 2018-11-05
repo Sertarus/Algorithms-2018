@@ -1,5 +1,6 @@
 package lesson3
 
+import java.lang.IllegalStateException
 import java.util.*
 import kotlin.NoSuchElementException
 
@@ -88,21 +89,22 @@ class KtBinaryTree<T : Comparable<T>> : AbstractMutableSet<T>(), CheckableSorted
             val oldValue = current?.value ?: return find(first())
             if (oldValue == last()) return null
             var tempCurrent = root
-            val wayList = mutableListOf<Node<T>?>()
-            val checkedNodes = mutableSetOf<Node<T>?>()
+            val wayList = mutableListOf<Node<T>>()
+            val checkedNodes = mutableSetOf<Node<T>>()
             while (true) {
-                val leftNodeFits = tempCurrent?.left != null && tempCurrent.value > oldValue
-                val rightNodeFits = tempCurrent?.right != null && tempCurrent.value <= oldValue
+                tempCurrent ?: throw NoSuchElementException()
+                val leftNodeFits = tempCurrent.left != null && tempCurrent.value > oldValue
+                val rightNodeFits = tempCurrent.right != null && tempCurrent.value <= oldValue
                 when {
-                    (leftNodeFits && !checkedNodes.contains(tempCurrent?.left)) -> {
+                    (leftNodeFits && !checkedNodes.contains(tempCurrent.left)) -> {
                         wayList.add(tempCurrent)
-                        tempCurrent = tempCurrent?.left
+                        tempCurrent = tempCurrent.left
                     }
-                    (rightNodeFits && !checkedNodes.contains(tempCurrent?.right)) -> {
+                    (rightNodeFits && !checkedNodes.contains(tempCurrent.right)) -> {
                         wayList.add(tempCurrent)
-                        tempCurrent = tempCurrent?.right
+                        tempCurrent = tempCurrent.right
                     }
-                    (tempCurrent!!.value > oldValue) -> return tempCurrent
+                    (tempCurrent.value > oldValue) -> return tempCurrent
                     else -> {
                         if (wayList.size > 0) {
                             checkedNodes.add(tempCurrent)
@@ -127,18 +129,8 @@ class KtBinaryTree<T : Comparable<T>> : AbstractMutableSet<T>(), CheckableSorted
          */
         // T = O(h) R = O(1), где h - высота дерева
         override fun remove() {
-            val iterator = this@KtBinaryTree.BinaryTreeIterator()
-            var parentNode: Node<T>? = null
-            var parentIsLess = false
-            while (iterator.hasNext()) {
-                iterator.next()
-                if (iterator.current?.right != null && iterator.current?.right!! == current) {
-                    parentNode = iterator.current
-                    parentIsLess = true
-                } else if (iterator.current?.left != null && iterator.current?.left!! == current) {
-                    parentNode = iterator.current
-                }
-            }
+            val parentNode: Node<T>? = findParent()
+            val parentIsLess = parentNode?.right == current
             when {
                 (current?.left == null && current?.right == null) -> {
                     if (current == root) root = null
@@ -191,6 +183,25 @@ class KtBinaryTree<T : Comparable<T>> : AbstractMutableSet<T>(), CheckableSorted
                 }
             }
             size--
+        }
+
+        private fun findParent(): Node<T>? {
+            val removedElement = current ?: throw IllegalStateException()
+            if (!contains(current?.value)) throw IllegalStateException()
+            var tempCurrent = root ?: throw IllegalStateException()
+            if (tempCurrent == removedElement) return null
+            while (true) {
+                val comparison = removedElement.value.compareTo(tempCurrent.value)
+                if (tempCurrent.left == removedElement || tempCurrent.right == removedElement) return tempCurrent
+                tempCurrent = when {
+                    (comparison < 0) -> {
+                        tempCurrent.left!!
+                    }
+                    else -> {
+                        tempCurrent.right!!
+                    }
+                }
+            }
         }
     }
 
