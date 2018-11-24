@@ -2,6 +2,8 @@
 
 package lesson5
 
+import java.util.*
+
 /**
  * Эйлеров цикл.
  * Средняя
@@ -88,8 +90,61 @@ fun Graph.minimumSpanningTree(): Graph {
  *
  * Эта задача может быть зачтена за пятый и шестой урок одновременно
  */
+// T = O(V + E) R = O(V), где V - количество вершин в графе E - количество рёбер
 fun Graph.largestIndependentVertexSet(): Set<Graph.Vertex> {
-    TODO()
+    val verticesAndDegrees = sortedMapOf<Int, MutableSet<Graph.Vertex>>()
+    this.vertices.forEach {
+        verticesAndDegrees.getOrPut(this.getConnections(it).size) { mutableSetOf() }.add(it)
+    }
+    val resultForHighestDegreeSearch = mutableSetOf<Graph.Vertex>()
+    val prohibitedVerticesForHighestDegreeSearch = mutableSetOf<Graph.Vertex>()
+    val pointsToCheckForHighestDegreeSearch = sortedMapOf<Int, SortedMap<Int, Graph.Vertex>>()
+    val resultForLeastDegreeSearch = mutableSetOf<Graph.Vertex>()
+    val prohibitedVerticesForLeastDegreeSearch = mutableSetOf<Graph.Vertex>()
+    val pointsToCheckForLeastDegreeSearch = sortedMapOf<Int, SortedMap<Int, Graph.Vertex>>()
+    verticesAndDegrees.entries.reversed().forEach { entry ->
+        entry.value.forEach { vertex ->
+            val index = this.vertices.indexOf(vertex)
+            pointsToCheckForLeastDegreeSearch.getOrPut(entry.key) { sortedMapOf() }[index] = vertex
+            this.getNeighbors(vertex).forEach { neighbour ->
+                val neighbourIndex = this.vertices.indexOf(neighbour)
+                pointsToCheckForHighestDegreeSearch.getOrPut(entry.key) { sortedMapOf() }[neighbourIndex] = neighbour
+            }
+        }
+    }
+    var indexSumForHighestDegreeSearch = 0
+    pointsToCheckForHighestDegreeSearch.values.reversed().forEach { mapOfMaps ->
+        mapOfMaps.forEach { mapOfVertices ->
+            if (!prohibitedVerticesForHighestDegreeSearch.contains(mapOfVertices.value)
+                    && !resultForHighestDegreeSearch.contains(mapOfVertices.value)) {
+                this.getNeighbors(mapOfVertices.value).forEach {
+                    prohibitedVerticesForHighestDegreeSearch.add(it)
+                }
+                resultForHighestDegreeSearch.add(mapOfVertices.value)
+                indexSumForHighestDegreeSearch += mapOfVertices.key
+            }
+        }
+    }
+    var indexSumForLeastDegreeSearch = 0
+    pointsToCheckForLeastDegreeSearch.values.forEach { mapOfMaps ->
+        mapOfMaps.forEach { mapOfVertices ->
+            if (!prohibitedVerticesForLeastDegreeSearch.contains(mapOfVertices.value)
+                    && !resultForLeastDegreeSearch.contains(mapOfVertices.value)) {
+                this.getNeighbors(mapOfVertices.value).forEach {
+                    prohibitedVerticesForLeastDegreeSearch.add(it)
+                }
+                resultForLeastDegreeSearch.add(mapOfVertices.value)
+                indexSumForLeastDegreeSearch += mapOfVertices.key
+            }
+        }
+    }
+    return when {
+        resultForHighestDegreeSearch.size > resultForLeastDegreeSearch.size -> resultForHighestDegreeSearch
+        resultForHighestDegreeSearch.size == resultForLeastDegreeSearch.size ->
+            return if (indexSumForHighestDegreeSearch < indexSumForLeastDegreeSearch) resultForHighestDegreeSearch
+            else resultForLeastDegreeSearch
+        else -> resultForLeastDegreeSearch
+    }
 }
 
 /**
@@ -112,6 +167,49 @@ fun Graph.largestIndependentVertexSet(): Set<Graph.Vertex> {
  *
  * Ответ: A, E, J, K, D, C, H, G, B, F, I
  */
+// T = O(V + E) R = O(V)
 fun Graph.longestSimplePath(): Path {
-    TODO()
+    var bestPath = mutableListOf<Graph.Vertex>()
+    this.vertices.forEach {
+        var currentPath = mutableListOf<Graph.Vertex>(it)
+        val prohibitedTransitions = mutableListOf<Pair<Graph.Vertex, Graph.Vertex>>()
+        var transitionCompleted = false
+        while (true) {
+            val iterator = this.getNeighbors(currentPath.last()).iterator()
+            while (iterator.hasNext()) {
+                val element = iterator.next()
+                val transition = Pair(currentPath.last(), element)
+                if (!currentPath.contains(element) && !prohibitedTransitions.contains(transition)) {
+                    currentPath.add(element)
+                    transitionCompleted = true
+                    break
+                }
+            }
+            if (!transitionCompleted) {
+                if (currentPath.size > bestPath.size) bestPath = currentPath
+                if (currentPath.size == 1) break
+                if (currentPath.size > 1) {
+                    for (i in currentPath.size - 2 downTo 0) {
+                        if (this.getNeighbors(currentPath[i]).size > 2) {
+                            val iteratorOnCompletePath = this.getNeighbors(currentPath[i]).iterator()
+                            while (iteratorOnCompletePath.hasNext()) {
+                                val element = iteratorOnCompletePath.next()
+                                if (!currentPath.subList(0, currentPath.size - i - 1).contains(element)) {
+                                    prohibitedTransitions.add(Pair(currentPath[i], currentPath[i + 1]))
+                                    break
+                                }
+                            }
+                        }
+                        if (i == 0) {
+                            prohibitedTransitions.add(Pair(currentPath[0], currentPath[1]))
+                        }
+                    }
+                }
+                currentPath = mutableListOf(it)
+            } else transitionCompleted = false
+        }
+    }
+    var resultPath = Path(bestPath.first())
+    for (i in 1 until bestPath.size) resultPath = Path(resultPath, this, bestPath[i])
+    return resultPath
 }
